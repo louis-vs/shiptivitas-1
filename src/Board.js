@@ -56,6 +56,58 @@ export default class Board extends React.Component {
     );
   }
 
+  componentDidMount() {
+    this.drake = Dragula([
+      this.swimlanes.backlog.current,
+      this.swimlanes.inProgress.current,
+      this.swimlanes.complete.current,
+    ]);
+
+    this.drake.on("drop", (el, target, source, sibling) => this.updateClients(el, target, source, sibling));
+  }
+
+  componentWillUnmount() {
+    this.drake.remove();
+  }
+
+  updateClients(el, target, _, sibling) {
+    // Revert DOM changes to play nice with React
+    this.drake.cancel(true);
+
+    // Find target swimlane
+    let targetSwimlane = "backlog";
+    if(target === this.swimlanes.inProgress.current) {
+      targetSwimlane = "in-progress";
+    } else if(target === this.swimlanes.complete.current) {
+      targetSwimlane = "complete";
+    }
+
+    // Copy clients array
+    let clientsList = [
+      ...this.state.clients.backlog,
+      ...this.state.clients.inProgress,
+      ...this.state.clients.complete,
+    ];
+
+    // Extract moved client
+    let movedClient = clientsList.splice(clientsList.findIndex(client => client.id === el.dataset.id, 1), 1)[0];
+    movedClient.status = targetSwimlane;
+
+    // Re-insert moved client just before sibling
+    // if no sibling found, findIndex() defaults to -1
+    const index = clientsList.findIndex(client => sibling && client.id === sibling.dataset.id);
+    clientsList.splice(index === -1 ? clientsList.length : index, 0, movedClient);
+
+    // Update React state
+    this.setState({
+      clients: {
+        backlog: clientsList.filter(client => !client.status || client.status === 'backlog'),
+        inProgress: clientsList.filter(client => client.status && client.status === 'in-progress'),
+        complete: clientsList.filter(client => client.status && client.status === 'complete'),
+      }
+    });
+  }
+
   render() {
     return (
       <div className="Board">

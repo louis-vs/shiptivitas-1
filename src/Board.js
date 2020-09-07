@@ -23,23 +23,23 @@ export default class Board extends React.Component {
   }
   getClients() {
     return [
-      ['1','Stark, White and Abbott','Cloned Optimal Architecture', 'in-progress'],
-      ['2','Wiza LLC','Exclusive Bandwidth-Monitored Implementation', 'complete'],
+      ['1','Stark, White and Abbott','Cloned Optimal Architecture', 'backlog'],
+      ['2','Wiza LLC','Exclusive Bandwidth-Monitored Implementation', 'backlog'],
       ['3','Nolan LLC','Vision-Oriented 4Thgeneration Graphicaluserinterface', 'backlog'],
-      ['4','Thompson PLC','Streamlined Regional Knowledgeuser', 'in-progress'],
-      ['5','Walker-Williamson','Team-Oriented 6Thgeneration Matrix', 'in-progress'],
+      ['4','Thompson PLC','Streamlined Regional Knowledgeuser', 'backlog'],
+      ['5','Walker-Williamson','Team-Oriented 6Thgeneration Matrix', 'backlog'],
       ['6','Boehm and Sons','Automated Systematic Paradigm', 'backlog'],
       ['7','Runolfsson, Hegmann and Block','Integrated Transitional Strategy', 'backlog'],
       ['8','Schumm-Labadie','Operative Heuristic Challenge', 'backlog'],
       ['9','Kohler Group','Re-Contextualized Multi-Tasking Attitude', 'backlog'],
       ['10','Romaguera Inc','Managed Foreground Toolset', 'backlog'],
-      ['11','Reilly-King','Future-Proofed Interactive Toolset', 'complete'],
+      ['11','Reilly-King','Future-Proofed Interactive Toolset', 'backlog'],
       ['12','Emard, Champlin and Runolfsdottir','Devolved Needs-Based Capability', 'backlog'],
-      ['13','Fritsch, Cronin and Wolff','Open-Source 3Rdgeneration Website', 'complete'],
+      ['13','Fritsch, Cronin and Wolff','Open-Source 3Rdgeneration Website', 'backlog'],
       ['14','Borer LLC','Profit-Focused Incremental Orchestration', 'backlog'],
-      ['15','Emmerich-Ankunding','User-Centric Stable Extranet', 'in-progress'],
-      ['16','Willms-Abbott','Progressive Bandwidth-Monitored Access', 'in-progress'],
-      ['17','Brekke PLC','Intuitive User-Facing Customerloyalty', 'complete'],
+      ['15','Emmerich-Ankunding','User-Centric Stable Extranet', 'backlog'],
+      ['16','Willms-Abbott','Progressive Bandwidth-Monitored Access', 'backlog'],
+      ['17','Brekke PLC','Intuitive User-Facing Customerloyalty', 'backlog'],
       ['18','Bins, Toy and Klocko','Integrated Assymetric Software', 'backlog'],
       ['19','Hodkiewicz-Hayes','Programmable Systematic Securedline', 'backlog'],
       ['20','Murphy, Lang and Ferry','Organized Explicit Access', 'backlog'],
@@ -50,10 +50,54 @@ export default class Board extends React.Component {
       status: companyDetails[3],
     }));
   }
-  renderSwimlane(name, clients, ref) {
+  renderSwimlane(name, clients, ref, status) {
     return (
-      <Swimlane name={name} clients={clients} dragulaRef={ref}/>
+      <Swimlane name={name} clients={clients} dragulaRef={ref} status={status}/>
     );
+  }
+
+  hyphenToCamelCase(str) {
+    return str.replace(/-([a-z])/g, g => { return g[1].toUpperCase(); });
+  }
+
+  changeCardColor(el, color, status) {
+    el.className = `Card Card-${color}`;
+    el.dataset.status = status;
+  }
+
+  componentDidMount() {
+    Dragula({
+      isContainer: el => {
+        return el.classList.contains('Swimlane-dragColumn');
+      }
+    }).on("drop", (el, target) => {
+      // I had hoped the below code would work. It produces the correct array, but setState() throws an error
+      // that I wasn't able to work out.
+      // const oldStatus = this.hyphenToCamelCase(el.dataset.status);
+      // const newStatus = this.hyphenToCamelCase(target.dataset.status);
+      // let updatedClients = this.state.clients;
+      // let movedClient = updatedClients[oldStatus].splice(updatedClients[oldStatus].findIndex(client => client.id === el.dataset.id), 1)[0];
+      // movedClient.status = newStatus;
+      // updatedClients[newStatus].push(movedClient);
+      // this.setState({clients: updatedClients});
+
+      // edit the DOM directly
+      const status = target.dataset.status;
+      switch (status) {
+        case "backlog":
+          this.changeCardColor(el, 'grey', status);
+          break;
+        case "in-progress":
+          this.changeCardColor(el, 'blue', status);
+          break;
+        case "complete":
+          this.changeCardColor(el, 'green', status);
+          break;
+      
+        default:
+          break;
+      }
+    });
   }
 
   render() {
@@ -62,13 +106,13 @@ export default class Board extends React.Component {
         <div className="container-fluid">
           <div className="row">
             <div className="col-md-4">
-              {this.renderSwimlane('Backlog', this.state.clients.backlog, this.swimlanes.backlog)}
+              {this.renderSwimlane('Backlog', this.state.clients.backlog, this.swimlanes.backlog, 'backlog')}
             </div>
             <div className="col-md-4">
-              {this.renderSwimlane('In Progress', this.state.clients.inProgress, this.swimlanes.inProgress)}
+              {this.renderSwimlane('In Progress', this.state.clients.inProgress, this.swimlanes.inProgress, 'in-progress')}
             </div>
             <div className="col-md-4">
-              {this.renderSwimlane('Complete', this.state.clients.complete, this.swimlanes.complete)}
+              {this.renderSwimlane('Complete', this.state.clients.complete, this.swimlanes.complete, 'complete')}
             </div>
           </div>
         </div>
